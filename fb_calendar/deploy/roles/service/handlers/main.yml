@@ -1,0 +1,3 @@
+---
+- name: restart supervise service
+  shell: pgrep -f supervise | sudo xargs kill -s HUP

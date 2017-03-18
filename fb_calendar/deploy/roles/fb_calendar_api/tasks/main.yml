@@ -1,0 +1,75 @@
+---
+
+- name: Install libpq
+  apt: name=libpq-dev
+
+- name: Install postgres client
+  apt: name=postgresql
+
+- name: "Create fb_calendar virtual environment"
+  shell: (virtualenv {{venv}}/fb_calendar 2> /dev/null; true)
+  become: true
+  become_user: root
+
+- name: "Chown the virtualenv to the app user"
+  file:
+    group: "{{ app_user }}"
+    owner: "{{ app_user }}"
+    recurse: true
+    path: "{{ venv }}/fb_calendar"
+
+- name: "Upgrade pip to the latest"
+  shell: "{{ venv }}/fb_calendar/bin/pip install --upgrade pip"
+
+- name: "Install python requirements"
+  pip: requirements=/src/fb_calendar/requirements.txt virtualenv=/fb_calendar/local/venv/fb_calendar
+
+- name: "Install python dev-requirements"
+  pip: requirements=/src/fb_calendar/dev-requirements.txt virtualenv=/fb_calendar/local/venv/fb_calendar
+
+- name: "Install webapp"
+  daemontools_svc:
+   name: webapp
+   state: started
+   user: fb_calendar
+   run_cmd: "/fb_calendar/local/venv/fb_calendar/bin/python /fb_calendar/local/app/app.py --port={incr}"
+   setup_cmd: "export APP_ENVIRONMENT=dev"
+   daemon_path: "/src/fb_calendar/"
+   count: 1
+   incr_start: 8888
+  notify: restart webapp
+
+- name: "Sync secrets from template"
+  template:
+    src: secrets.json
+    dest: "{{ app_root }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: 0644
+  notify: restart webapp
+
+- name: Ensure the database is created
+  become_user: postgres
+  postgresql_db: name={{dbname}} encoding='UTF-8' lc_collate='en_US.UTF-8' lc_ctype='en_US.UTF-8' template=template0 state=present
+
+- name: Create the database application user, {{dbuser}}
+  become: true
+  become_user: postgres
+  postgresql_user: db={{dbname}} name={{dbuser}} password={{dbpassword}} priv=ALL
+  register: db_app_user
+
+- name: ensure user does not have unnecessary privileges
+  become: true
+  become_user: postgres
+  postgresql_user: name={{dbuser}}
+  register: user_priv
+
+# This has to go here because the restart must occur before the migrations
+- name: restart postgresql
+  become: true
+  become_user: root
+  service: name=postgresql state=restarted
+  when: db_app_user.changed or user_priv.changed 
+
+- name: run migrations
+  shell: ". {{venv}}/fb_calendar/bin/activate && {{ app_root }}/migrations/run"

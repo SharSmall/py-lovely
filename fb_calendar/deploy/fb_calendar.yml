@@ -1,0 +1,30 @@
+---
+- hosts: all 
+
+  gather_facts: no
+
+  pre_tasks:
+    - name: "Install python2.7"
+      raw: sudo apt-get -y install python
+
+  sudo: true
+  vars_files:
+    - "environments/{{ env }}/group_vars/all"
+    - "environments/{{ env }}/group_vars/vault"
+
+  roles:
+    - fb_calendar
+    - service
+    - fb_calendar_db
+    - event_scraper
+    - page_scraper
+    - friend_scraper
+    - fb_calendar_api
+
+  vars:
+    local: /fb_calendar/local
+    app_root: /fb_calendar/local/app
+    venv: /fb_calendar/local/venv
+    app_service: /fb_calendar/service 
+    src: /src/fb_calendar
+    app_user: fb_calendar

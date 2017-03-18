@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Event Scraper &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Friend Scraper" href="friend_scraper.html" />
+    <link rel="prev" title="Page Scraper" href="page_scraper.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="event-scraper">
+<h1>Event Scraper<a class="headerlink" href="#event-scraper" title="Permalink to this headline">¶</a></h1>
+<p>At the moment this module contains some redundant functionality. The functionality that saves events in page_scraper.py should be removed in favor of this process.</p>
+<p>event_scraper.py downloads all new events as well as updates existing events (since RSVPs and such can and do change).</p>
+<span class="target" id="module-event_scraper"></span><dl class="function">
+<dt id="event_scraper.continuously_update">
+<code class="descclassname">event_scraper.</code><code class="descname">continuously_update</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/event_scraper.html#continuously_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#event_scraper.continuously_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method lets us avoid pulling the complete history of pages all the damn time. It solves a
+number of problems. First, when a new user has liked a page an older user has already caused
+to be saved in our database; we don&#8217;t have to pull anything for that page. This means faster
+API response times at a user&#8217;s initial login. The second problem this solves is; when that same
+thing occurs (we&#8217;re pulling a page already saved) we don&#8217;t have to pull the whole history for
+the page.</p>
+<p>Every rate_limit (5 minutes) seconds we pull _all_ the pages in our database (USING A CURSOR,
+NOT RAM). Then we go through all those pages requesting events. We request events for which
+the starting time is in the future, obviously, because past events are no longer relevant.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="event_scraper.priority_update">
+<code class="descclassname">event_scraper.</code><code class="descname">priority_update</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/event_scraper.html#priority_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#event_scraper.priority_update" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This method pulls the pages users _just_ added to the database by either</dt>
+<dd><ol class="first last arabic simple">
+<li>logging in for the first time or</li>
+<li>logging in again after liking new pages (or pages we didn&#8217;t pull last time they logged in
+due to errors or whatever).</li>
+<li>Having a friend log in for the first time (and hence they were pulled by the 
+friend_scraper process).</li>
+</ol>
+</dd>
+</dl>
+<p>We first query for all _new_ pages. These are all pages for which created_at == updated_at. Then
+we just loop through all those pages, querying Facebook for their latest; and saving that
+to the DB.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="page_scraper.html" title="previous chapter">Page Scraper</a></li>
+      <li>Next: <a href="friend_scraper.html" title="next chapter">Friend Scraper</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/event_scraper.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/event_scraper.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Friend Scraper &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Event Scraper" href="event_scraper.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="friend-scraper">
+<h1>Friend Scraper<a class="headerlink" href="#friend-scraper" title="Permalink to this headline">¶</a></h1>
+<p>This module looks for all new active users. Then it queries for their friends that have the app enabled and saves them as passive users (if they don&#8217;t exist as active users for whatever reason e.g. signup failed).</p>
+<p>Next the process indicates a connection between the user and their friends by creating a record in the friendship table.</p>
+<span class="target" id="module-friend_scraper"></span><dl class="function">
+<dt id="friend_scraper.continuously_update">
+<code class="descclassname">friend_scraper.</code><code class="descname">continuously_update</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/friend_scraper.html#continuously_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#friend_scraper.continuously_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Now we&#8217;re getting into territory that really warrants a message bus. This 
+method looks for users whose friend count is 0. The first thing we need 
+to do here is set that friend count to -1 optimistically. This allows this
+process to run in parallel with other instances (which is probably 
+necessary since it&#8217;s pretty heavy).</p>
+<p>We select those users whose friend coutn is 0 with a database query every so 
+often. That results in a lot of unnecessary querying! How this _should_ 
+work is simple:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>User signs up or logs into the client.</li>
+<li>The backend returns a user object with a friend count of 0</li>
+<li>The client sends a message along the bus to an event driven 
+queuereader waiting to process the friend list for the target user.</li>
+</ol>
+</div></blockquote>
+<p>You&#8217;re probably asking &#8220;why don&#8217;t we just have the client POST to a new 
+endpoint?&#8221; This process is long-winded. Users can have up to 5K friends, 
+which means a POST endpoint could take &gt; 10s to return normally. Let&#8217;s
+just avoid gateway timeouts and the like on edge cases by daemonizing
+this.</p>
+<p>Ultimately we should be implementing NSQd (preferred) or Kafka (second). When
+that happens we&#8217;ll convert this to a queuereader. This is good enough for
+now.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="event_scraper.html" title="previous chapter">Event Scraper</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/friend_scraper.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/friend_scraper.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

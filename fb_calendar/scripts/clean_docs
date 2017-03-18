@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import os
+import shutil
+
+all_files = set(os.listdir('/src/fb_calendar/docs/'))
+build_files = all_files - set(['source']) 
+
+for filename in build_files:
+    filepath = os.path.join('/src/fb_calendar/docs', filename)
+    if os.path.isfile(filepath):
+        os.unlink(filepath)
+    elif os.path.isdir(filepath):
+        shutil.rmtree(filepath)

@@ -1,0 +1,25 @@
+# Swap files
+*.swp
+*.swo
+
+# Python
+*.pyc
+build
+
+# VirtualBox, vagrant
+.vagrant
+*.log
+deploy/fb_calendar.retry
+
+# PyCharm
+.idea
+ 
+# Android Studio
+WakeAndShake/*.iml
+WakeAndShake/.gradle
+WakeAndShake/local.properties
+WakeAndShake/.idea/workspace.xml
+WakeAndShake/.idea/libraries
+WakeAndShake/.DS_Store
+WakeAndShake/build
+WakeAndShake/captures

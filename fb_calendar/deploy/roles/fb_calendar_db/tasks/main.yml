@@ -1,0 +1,18 @@
+---
+
+- name: "Install packages"
+  apt: name={{item}}
+  with_items:
+    - postgresql
+    - libpq-dev
+    - python-psycopg2
+    - postgresql-client-common
+    - postgresql-client-9.5
+
+- name: Ensure the PostgreSQL service is running
+  service: name=postgresql state=started enabled=yes
+
+- name: Ensure password authentication is enabled for all users
+  template: src=pg_hba.conf dest=/etc/postgresql/9.5/main/ owner=postgres group=postgres mode=640
+  notify:
+    - restart postgresql

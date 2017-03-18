@@ -1,0 +1,19 @@
+---
+
+- name: "Install page_scraper"
+  daemontools_svc:
+   name: page_scraper
+   state: started
+   user: fb_calendar
+   run_cmd: "/fb_calendar/local/venv/fb_calendar/bin/python /fb_calendar/local/app/page_scraper.py"
+   setup_cmd: "export APP_ENVIRONMENT=dev"
+   daemon_path: "/src/fb_calendar/"
+   count: 1
+  notify: restart webapp
+
+- template:
+    src: secrets.json
+    dest: "{{ app_root }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: 0644

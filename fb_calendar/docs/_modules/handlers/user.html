@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>handlers.user &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for handlers.user</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">psycopg2</span>
+<span class="kn">import</span> <span class="nn">tornado.web</span>
+<span class="kn">import</span> <span class="nn">tornado.gen</span>
+
+<span class="kn">from</span> <span class="nn">user</span> <span class="k">import</span> <span class="n">User</span> <span class="k">as</span> <span class="n">DBUser</span>
+<span class="kn">from</span> <span class="nn">event</span> <span class="k">import</span> <span class="n">UserEvent</span>
+<span class="kn">from</span> <span class="nn">page</span> <span class="k">import</span> <span class="n">Page</span>
+<span class="kn">import</span> <span class="nn">event</span>
+<span class="kn">from</span> <span class="nn">services</span> <span class="k">import</span> <span class="n">facebook</span>
+<span class="kn">from</span> <span class="nn">handlers.base</span> <span class="k">import</span> <span class="n">BaseHandler</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<div class="viewcode-block" id="User"><a class="viewcode-back" href="../../handlers__user.html#handlers.user.User">[docs]</a><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="User.post"><a class="viewcode-back" href="../../handlers__user.html#handlers.user.User.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint creates a new user. If the user already exists the parameters passed will be used to update the</span>
+<span class="sd">        existing user. The client is intended to implement the user facing facebook API to get the required</span>
+<span class="sd">        variables. They all come as part of the authentication response.</span>
+
+<span class="sd">        :param int fbid: The user&#39;s facebook id.</span>
+<span class="sd">        :param str access_token: The access token to use to pull the user&#39;s data from FB.</span>
+<span class="sd">        :param int expires_in: The length of time the access token is valid for in seconds.</span>
+
+<span class="sd">        :returns: If we&#39;re successful in saving this user it&#39;ll return the current database record for them. This just</span>
+<span class="sd">        means we&#39;ll rewrite the expires_in to reflect the unix timestamp at which the access token is no longer</span>
+<span class="sd">        valid and we&#39;ll include the list of grants, comma delimited, that were approved by the user. NOTE: the</span>
+<span class="sd">        expiry is approximate and can be seconds off.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                  &quot;user&quot;: {</span>
+<span class="sd">                      &quot;fbid&quot;: 12345,</span>
+<span class="sd">                      &quot;access_token&quot;: &quot;xxxxxxxxxxxxxxx&quot;,</span>
+<span class="sd">                      &quot;expires_at&quot;: 123456789012,</span>
+<span class="sd">                      &quot;grants&quot;: &quot;likes,events&quot;</span>
+<span class="sd">                  }</span>
+<span class="sd">              }</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got a user POST request&quot;</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fbid&#39;</span><span class="p">))</span>
+        <span class="n">access_token</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;access_token&#39;</span><span class="p">)</span>
+        <span class="n">expires_in</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;expires_in&#39;</span><span class="p">)</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">DBUser</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">u</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Inserting user with access_token=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">access_token</span><span class="p">))</span>
+            <span class="n">DBUser</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">fbid</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span>
+                        <span class="n">access_token</span><span class="o">=</span><span class="n">access_token</span><span class="p">,</span>
+                        <span class="n">expires_at</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">expires_in</span><span class="p">)</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">DBUser</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Updating user with access_token=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">access_token</span><span class="p">))</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">DBUser</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fbid</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span>
+                            <span class="n">access_token</span><span class="o">=</span><span class="n">access_token</span><span class="p">,</span>
+                            <span class="n">expires_at</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">expires_in</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+            <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">u</span>
+        <span class="p">}))</span></div>
+
+<div class="viewcode-block" id="User.get"><a class="viewcode-back" href="../../handlers__user.html#handlers.user.User.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves a previously stored user from the database. I can&#39;t think of a good reason to have this besides</span>
+<span class="sd">        debugging and later when we add other attributes to the user and/or allow them to update a &quot;profile&quot;.</span>
+
+<span class="sd">        :param int fbid: The user&#39;s Facebook ID</span>
+
+<span class="sd">        :returns: The user object.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                  &quot;user&quot;: {</span>
+<span class="sd">                      &quot;fbid&quot;: 12345,</span>
+<span class="sd">                      &quot;access_token&quot;: &quot;xxxxxxxxxxxxxxx&quot;,</span>
+<span class="sd">                      &quot;expires_at&quot;: 123456789012,</span>
+<span class="sd">                      &quot;grants&quot;: &quot;likes,events&quot;</span>
+<span class="sd">                  }</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fbid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;fbid&#39;</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">DBUser</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">fbid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span><span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">u</span><span class="p">})</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,35 @@
+---
+- name: "Symlink /service /etc/service"
+  become: yes
+  file:
+    dest=/service
+    state=directory
+    force=true
+
+- name: "Install daemontools packages"
+  become: yes
+  apt:  
+    name={{item}}
+  with_items:
+    - svtools
+    - daemontools
+    - daemontools-run
+
+- name: "Replace /etc/service with /service in svscanboot"
+  template: src=templates/svscanboot dest=/usr/bin/svscanboot
+#  notify: restart supervise service
+
+- name: "Create init.d entry for svscanboot"
+  become: yes
+  template: src=templates/svscanboot_init dest=/etc/init.d/svscanboot mode=0755
+
+- name: "Add a startup entry for svscanboot"
+  become: yes
+  command: update-rc.d svscanboot defaults
+
+- name: start svscanboot
+  become: yes
+  service:
+    name=svscanboot
+    state=started
+

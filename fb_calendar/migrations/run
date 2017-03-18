@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+import sys
+import os
+import psycopg2
+
+
+path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(path, '..'))
+
+sys.stderr.write("Starting migration...\n")
+sys.stderr.write("Importing settings...\n")
+
+import settings
+
+sys.stderr.write("done Importing settings...\n")
+
+migrations = os.listdir(path)
+sys.stderr.write("Migrations {}...\n".format(str(migrations)))
+for filename in sorted(migrations):
+    migration = os.path.join(path, filename)
+    sys.stderr.write("Connecting to postgres... dbname={}, dbuser={}, dbpassword={}\n".format(settings.get('dbname'),
+                                                                                              settings.get('dbuser'),
+                                                                                              settings.get('dbpassword')))
+    conn = psycopg2.connect(database=settings.get('dbname'),
+                            user=settings.get('dbuser'),
+                            password=settings.get('dbpassword'))
+    cur = conn.cursor()
+    sys.stderr.write("Got cursor\n")
+    applied = set()
+    try:
+        sys.stderr.write("Executing query...\n")
+        cur.execute("SELECT name, applied_at FROM migrations;");
+        rows = cur.fetchall()
+        sys.stderr.write("Fetching all...\n")
+        for name, applied_at in rows:
+            applied.add(os.path.join(path, name))
+    except Exception, e:
+        if conn:
+            conn.rollback()
+
+    try:
+        if migration.endswith('.sql') and migration not in applied:
+            sys.stderr.write("Running migration {}\n".format(migration))
+            with open(migration, 'rb') as fp:
+                sql = fp.read().replace("\n", "")
+                cur.execute(sql)
+                conn.commit()
+    except Exception, e:
+        if conn:
+            conn.rollback()
+        raise SystemExit(str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()

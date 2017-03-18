@@ -1,0 +1,5 @@
+---
+- name: restart page_scraper
+  daemontools_svc:
+    name: page_scraper
+    state: restarted

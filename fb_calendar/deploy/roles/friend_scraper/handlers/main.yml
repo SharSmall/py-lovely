@@ -1,0 +1,5 @@
+---
+- name: restart friend_scraper
+  daemontools_svc:
+    name: friend_scraper
+    state: restarted

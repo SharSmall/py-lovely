@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>friend_scraper &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for friend_scraper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">tornado.gen</span>
+<span class="kn">import</span> <span class="nn">tornado.ioloop</span>
+
+<span class="kn">from</span> <span class="nn">services</span> <span class="k">import</span> <span class="n">facebook</span>
+<span class="kn">import</span> <span class="nn">page</span>
+<span class="kn">from</span> <span class="nn">user</span> <span class="k">import</span> <span class="n">User</span> 
+<span class="kn">from</span> <span class="nn">friendship</span> <span class="k">import</span> <span class="n">Friendship</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="continuously_update"><a class="viewcode-back" href="../friend_scraper.html#friend_scraper.continuously_update">[docs]</a><span class="k">def</span> <span class="nf">continuously_update</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Now we&#39;re getting into territory that really warrants a message bus. This </span>
+<span class="sd">    method looks for users whose friend count is 0. The first thing we need </span>
+<span class="sd">    to do here is set that friend count to -1 optimistically. This allows this</span>
+<span class="sd">    process to run in parallel with other instances (which is probably </span>
+<span class="sd">    necessary since it&#39;s pretty heavy).</span>
+
+<span class="sd">    We select those users whose friend coutn is 0 with a database query every so </span>
+<span class="sd">    often. That results in a lot of unnecessary querying! How this _should_ </span>
+<span class="sd">    work is simple: </span>
+<span class="sd">        </span>
+<span class="sd">        1. User signs up or logs into the client. </span>
+<span class="sd">        2. The backend returns a user object with a friend count of 0</span>
+<span class="sd">        3. The client sends a message along the bus to an event driven </span>
+<span class="sd">           queuereader waiting to process the friend list for the target user.</span>
+
+<span class="sd">    You&#39;re probably asking &quot;why don&#39;t we just have the client POST to a new </span>
+<span class="sd">    endpoint?&quot; This process is long-winded. Users can have up to 5K friends, </span>
+<span class="sd">    which means a POST endpoint could take &gt; 10s to return normally. Let&#39;s</span>
+<span class="sd">    just avoid gateway timeouts and the like on edge cases by daemonizing</span>
+<span class="sd">    this.  </span>
+
+<span class="sd">    Ultimately we should be implementing NSQd (preferred) or Kafka (second). When</span>
+<span class="sd">    that happens we&#39;ll convert this to a queuereader. This is good enough for</span>
+<span class="sd">    now.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_users</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">select_all_new_active</span><span class="p">()</span> 
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">new_users</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Updating </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">fbid</span><span class="p">))</span>
+            <span class="n">fb_users</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">facebook</span><span class="o">.</span><span class="n">get_friends_for_fbid</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">fbid</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">access_token</span><span class="p">)</span>
+            <span class="n">user_specs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">friendship_specs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">fb_user</span> <span class="ow">in</span> <span class="n">fb_users</span><span class="p">:</span>
+                <span class="n">user_specs</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;fbid&#39;</span><span class="p">:</span> <span class="n">fb_user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+                    <span class="s1">&#39;access_token&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s1">&#39;expires_at&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="c1"># Indicates not to pull friends for this user.</span>
+                    <span class="s1">&#39;grants&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s1">&#39;total_friends&#39;</span><span class="p">:</span> <span class="mi">0</span>
+                <span class="p">})</span>
+                <span class="n">friendship_specs</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;fbid&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">fbid</span><span class="p">,</span>
+                    <span class="s1">&#39;friend_id&#39;</span><span class="p">:</span> <span class="n">fb_user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> 
+                <span class="p">})</span>
+              
+            <span class="c1"># These inserts SHOULD ignore errors and error on duplicate entries. </span>
+            <span class="n">User</span><span class="o">.</span><span class="n">bulk_insert</span><span class="p">(</span><span class="n">user_specs</span><span class="p">)</span>	
+            <span class="n">Friendship</span><span class="o">.</span><span class="n">bulk_insert</span><span class="p">(</span><span class="n">friendship_specs</span><span class="p">)</span>
+
+            <span class="c1"># This update indicates the whole process was successful.</span>
+            <span class="n">User</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fbid</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">fbid</span><span class="p">,</span> <span class="n">total_friends</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">friendship_specs</span><span class="p">))</span> 
+             
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Rate limit at a granular level, too.</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="c1">#  Log the error but continue. We never gonna die!</span>
+
+    <span class="n">tornado</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">continuously_update</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">ioloop</span> <span class="o">=</span> <span class="n">tornado</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">IOLoop</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+    <span class="n">ioloop</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">continuously_update</span><span class="p">)</span>
+    <span class="n">ioloop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

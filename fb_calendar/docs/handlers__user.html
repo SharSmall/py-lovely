@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>handlers.user &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="handlers.event" href="handlers__event.html" />
+    <link rel="prev" title="Welcome to fb_calendar’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="handlers-user">
+<h1>handlers.user<a class="headerlink" href="#handlers-user" title="Permalink to this headline">¶</a></h1>
+<p>This module provides Create and Update methods for User objects.</p>
+<dl class="class">
+<dt id="handlers.user.User">
+<em class="property">class </em><code class="descclassname">handlers.user.</code><code class="descname">User</code><span class="sig-paren">(</span><em>application</em>, <em>request</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/user.html#User"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.user.User" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="handlers.user.User.get">
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/user.html#User.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.user.User.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a previously stored user from the database. I can&#8217;t think of a good reason to have this besides
+debugging and later when we add other attributes to the user and/or allow them to update a &#8220;profile&#8221;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fbid</strong> (<em>int</em>) &#8211; The user&#8217;s Facebook ID</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The user object.<div class="highlight-JSON"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;fbid&quot;</span><span class="p">:</span> <span class="mi">12345</span><span class="p">,</span>
+        <span class="nt">&quot;access_token&quot;</span><span class="p">:</span> <span class="s2">&quot;xxxxxxxxxxxxxxx&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;expires_at&quot;</span><span class="p">:</span> <span class="mi">123456789012</span><span class="p">,</span>
+        <span class="nt">&quot;grants&quot;</span><span class="p">:</span> <span class="s2">&quot;likes,events&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="handlers.user.User.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/user.html#User.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.user.User.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>This endpoint creates a new user. If the user already exists the parameters passed will be used to update the
+existing user. The client is intended to implement the user facing facebook API to get the required
+variables. They all come as part of the authentication response.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fbid</strong> (<em>int</em>) &#8211; The user&#8217;s facebook id.</li>
+<li><strong>access_token</strong> (<em>str</em>) &#8211; The access token to use to pull the user&#8217;s data from FB.</li>
+<li><strong>expires_in</strong> (<em>int</em>) &#8211; The length of time the access token is valid for in seconds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">If we&#8217;re successful in saving this user it&#8217;ll return the current database record for them. This just</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>means we&#8217;ll rewrite the expires_in to reflect the unix timestamp at which the access token is no longer
+valid and we&#8217;ll include the list of grants, comma delimited, that were approved by the user. NOTE: the
+expiry is approximate and can be seconds off.</p>
+<blockquote>
+<div><div class="highlight-JSON"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;fbid&quot;</span><span class="p">:</span> <span class="mi">12345</span><span class="p">,</span>
+        <span class="nt">&quot;access_token&quot;</span><span class="p">:</span> <span class="s2">&quot;xxxxxxxxxxxxxxx&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;expires_at&quot;</span><span class="p">:</span> <span class="mi">123456789012</span><span class="p">,</span>
+        <span class="nt">&quot;grants&quot;</span><span class="p">:</span> <span class="s2">&quot;likes,events&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to fb_calendar&#8217;s documentation!</a></li>
+      <li>Next: <a href="handlers__event.html" title="next chapter">handlers.event</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/handlers__user.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/handlers__user.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

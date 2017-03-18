@@ -1,0 +1,5 @@
+---
+- name: restart event_scraper
+  daemontools_svc:
+    name: event_scraper
+    state: restarted

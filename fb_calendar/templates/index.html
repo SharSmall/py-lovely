@@ -1,0 +1,140 @@
+<!doctype HTML>
+<html>
+    <head>
+        <title>FB Event Calendar</title>
+    </head>
+    <body>
+        <script>
+            var scope = {scope: 'email,user_likes,user_friends'};
+            var STATIC = {};
+
+          function XHR(url, method, body, callback) {
+              var xhr = new XMLHttpRequest();
+              xhr.open(method, url, true);
+              xhr.onreadystatechange = function() {
+                  if (xhr.readyState == 4 ) {
+                      callback(JSON.parse(xhr.responseText));
+                  }
+              };
+              xhr.setRequestHeader("Content-Type", "application/json");
+              if (body) {
+                  xhr.send(JSON.stringify(body));
+              } else {
+                  xhr.send()
+              }
+          }
+
+            function eventToRow(event) {
+                var row = document.createElement('tr');
+                var columns = ['picture_url', 'page_name', 'name', 'start_time', 'attending_count', 'interested_count', 'noreply_count', 'place']
+                var cells = [];
+
+                var img = document.createElement('img');
+                img.src = event.picture_url;
+
+                var startTime = event.start_time;
+                event.start_time = new Date(0);
+                event.start_time.setUTCSeconds(startTime);
+
+                for (var i=0, len=columns.length; i<len; i++){
+                    var attr = columns[i];
+                    var cell = document.createElement('td');
+                    if (attr == 'picture_url') {
+                        cell.appendChild(img);
+                    } else {
+                        cell.innerHTML = event[attr];
+                    }
+                    row.appendChild(cell);
+                }
+                return row;
+            }
+
+            function populateTable(userId, page) {
+                var list = document.getElementById('event_list')
+                while (list.childNodes.length > 0) {
+                    list.removeChild(list.firstChild);
+                }
+                XHR('/feed/events/cool?page=' + page, 'GET', undefined,
+                function(events) {
+                    var tableBody = document.getElementById('event_list');
+                    tableBody.setAttribute("page", page);
+                    for (var i=0, len=events.data.length; i<len; i++) {
+                        tableBody.appendChild(eventToRow(events.data[i]));
+                    }
+                })
+            }
+
+            function previousPage() {
+                var currentPage = parseInt(document.getElementById('event_list').getAttribute('page'));
+                if (currentPage-1 < 0){
+                    return;
+                }
+                populateTable(STATIC.userID, currentPage-1);
+            }
+
+            function nextPage() {
+                var currentPage = parseInt(document.getElementById('event_list').getAttribute('page'));
+                populateTable(STATIC.userID, currentPage+1);
+            }
+
+          function handleAuth(response) {
+              if (response.status === 'connected') {
+                  var auth = response.authResponse;
+                  STATIC.userID = auth.userID;
+                  XHR('/user', 'POST', {
+                      'access_token': auth.accessToken,
+                      'expires_in': auth.expiresIn,
+                      'fbid': auth.userID
+                  }, function(resp){})
+
+                  XHR('/feed/events/cool', 'GET', undefined,
+                  function(events) {
+                      var tableBody = document.getElementById('event_list');
+                      tableBody.setAttribute("page", "0")
+                      for (var i=0, len=events.data.length; i<len; i++) {
+                          tableBody.appendChild(eventToRow(events.data[i]));
+                      }
+                  })
+              }
+          }
+
+          window.fbAsyncInit = function() {
+            FB.init({
+              appId      : '{{ fb_app_id }}',
+              xfbml      : true,
+              version    : 'v2.8'
+            });
+            FB.AppEvents.logPageView();
+            FB.getLoginStatus(function(response) {
+              if (response.status === 'connected') {
+                handleAuth(response);
+              } else {
+                FB.login(handleAuth, scope);
+              }
+            });
+          };
+
+          (function(d, s, id){
+             var js, fjs = d.getElementsByTagName(s)[0];
+             if (d.getElementById(id)) {return;}
+             js = d.createElement(s); js.id = id;
+             js.src = "//connect.facebook.net/en_US/sdk.js";
+             fjs.parentNode.insertBefore(js, fjs);
+           }(document, 'script', 'facebook-jssdk'));
+
+        </script>
+        <h1>Welcome to the FB Event Calendar</h1>
+        <h2>Check out the top events on pages you like.</h2>
+        <table>
+            <thead>
+                <tr><th>Picture</th><th>Host</th><th>Event</th><th>start_time</th><th>attending</th><th>interested</th><th>invited</th><th>location</th></tr>
+            </thead>
+            <tbody id="event_list">
+            </tbody>
+            <tfoot>
+            <tr><td colspan="8"><a href="javascript: previousPage();">Previous</a> &nbsp; <a href="javascript: nextPage();">Next</a></td></tr>
+            </tfoot>
+        </table>
+    </body>
+
+</html>

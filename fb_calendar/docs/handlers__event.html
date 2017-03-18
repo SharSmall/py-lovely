@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>handlers.event &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Page Scraper" href="page_scraper.html" />
+    <link rel="prev" title="handlers.user" href="handlers__user.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="handlers-event">
+<h1>handlers.event<a class="headerlink" href="#handlers-event" title="Permalink to this headline">¶</a></h1>
+<p>Provides CRUD methods for Event objects. This module is also responsible for generating various feeds of events. There are a few in there now we&#8217;re just playing around with.</p>
+<dl class="class">
+<dt id="handlers.event.UserEvents">
+<em class="property">class </em><code class="descclassname">handlers.event.</code><code class="descname">UserEvents</code><span class="sig-paren">(</span><em>application</em>, <em>request</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#UserEvents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.UserEvents" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="handlers.event.UserEvents.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#UserEvents.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.UserEvents.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be
+called Event. At the moment the default ranking is just by the number of people interested in the event. We
+will soon change this to a more sophisticated metric, but probably not for the MVP.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fbid</strong> (<em>int</em>) &#8211; The user&#8217;s Facebook ID</li>
+<li><strong>page</strong> (<em>int</em>) &#8211; Which page of results should be returned.</li>
+<li><strong>page_size</strong> (<em>int</em>) &#8211; The number of results to return per-page.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>A list of events by the default ranking as well as standard pagination parameters.</p>
+<div class="highlight-JSON"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+          <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;attending_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;interested_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;noreply_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;maybe_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;start_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;end_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;picture_url&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;ticket_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;place&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span>
+      <span class="p">},</span> 
+  <span class="p">],</span>
+  <span class="nt">&quot;next&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=2&amp;page_size=25&amp;fbid=123&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;prev&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=0&amp;page_size=25&amp;fbid=123&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="handlers.event.UserEvents.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#UserEvents.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.UserEvents.post" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This endpoint is intended to save an event to the user&#8217;s personal feed (the table user_event).</dt>
+<dd>If the event already exists, only the updated_at field is modified.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>s_user_id</strong> (<em>string</em>) &#8211; The user&#8217;s Facebook ID</li>
+<li><strong>s_event_id</strong> (<em>string</em>) &#8211; The ID of the event.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A pair of user_id, event_id.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="handlers.event.UserEvents.put">
+<code class="descname">put</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#UserEvents.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.UserEvents.put" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This endpoint is intended to update fields on a list of events. The updates are specified</dt>
+<dd><blockquote class="first">
+<div>in the PUT body as below. id is required for each update.</div></blockquote>
+<div class="last highlight-JSON"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;my new event name&quot;</span><span class="p">},</span> <span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;hidden&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;my other new event name&quot;</span><span class="p">}]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="handlers.event.BigEvents">
+<em class="property">class </em><code class="descclassname">handlers.event.</code><code class="descname">BigEvents</code><span class="sig-paren">(</span><em>application</em>, <em>request</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#BigEvents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.BigEvents" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="handlers.event.BigEvents.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#BigEvents.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.BigEvents.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be
+called Event. These events will be ordered by the number of people interested in them, and do not correspond
+to the user&#8217;s liked pages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>page</strong> (<em>int</em>) &#8211; Which page of results should be returned.</li>
+<li><strong>page_size</strong> (<em>int</em>) &#8211; The number of results to return per-page.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>A list of events ranked by the sheer volume of people interested in them</p>
+<div class="highlight-JSON"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+          <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;attending_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;interested_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;noreply_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;maybe_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;start_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;end_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;picture_url&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;ticket_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;place&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span>
+      <span class="p">},</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;next&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=2&amp;page_size=25&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;prev&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=0&amp;page_size=25&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="handlers.event.CoolEvents">
+<em class="property">class </em><code class="descclassname">handlers.event.</code><code class="descname">CoolEvents</code><span class="sig-paren">(</span><em>application</em>, <em>request</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#CoolEvents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.CoolEvents" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="handlers.event.CoolEvents.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/handlers/event.html#CoolEvents.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#handlers.event.CoolEvents.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be
+called Event. These events are ranked by the ratio of those &#8220;going to&#8221; the event to those that have not yet
+replied to their invitation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>page</strong> (<em>int</em>) &#8211; Which page of results should be returned.</li>
+<li><strong>page_size</strong> (<em>int</em>) &#8211; The number of results to return per-page.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>A list of events by the default ranking as well as standard pagination parameters.</p>
+<div class="highlight-JSON"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+          <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_id&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;page_name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;attending_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;interested_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;noreply_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;maybe_count&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;start_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;end_time&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;picture_url&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;ticket_uri&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;place&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span>
+      <span class="p">},</span> 
+  <span class="p">],</span>
+  <span class="nt">&quot;next&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=2&amp;page_size=25&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;prev&quot;</span><span class="p">:</span> <span class="s2">&quot;/events?page=0&amp;page_size=25&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="handlers__user.html" title="previous chapter">handlers.user</a></li>
+      <li>Next: <a href="page_scraper.html" title="next chapter">Page Scraper</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/handlers__event.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/handlers__event.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

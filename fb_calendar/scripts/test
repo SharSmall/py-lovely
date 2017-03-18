@@ -1,0 +1,16 @@
+#!/bin/sh 
+echo "Setting environment variables"
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH=/src/fb_calendar
+export PYTHONPATH=$PYTHONPATH:$TRAVIS_BUILD_DIR
+
+if [ -f /fb_calendar/local/venv/fb_calendar/bin/activate ]; then
+    . /fb_calendar/local/venv/fb_calendar/bin/activate >/dev/null 2>&1
+    pip install -r dev-requirements.txt >/dev/null 2>&1
+    pip install -r requirements.txt >/dev/null 2>&1
+else
+    . /home/travis/virtualenv/python2.7.9/bin/activate >/dev/null 2>&1
+fi
+
+echo "Running tests."
+find ./tests -name '*.py' | xargs py.test

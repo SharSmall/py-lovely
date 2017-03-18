@@ -1,0 +1,419 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>handlers.event &#8212; fb_calendar 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for handlers.event</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">tornado.web</span>
+<span class="kn">import</span> <span class="nn">tornado.gen</span>
+
+<span class="kn">import</span> <span class="nn">event</span>
+<span class="kn">from</span> <span class="nn">event</span> <span class="k">import</span> <span class="n">UserEvent</span>
+<span class="kn">from</span> <span class="nn">event</span> <span class="k">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">handlers.base</span> <span class="k">import</span> <span class="n">BaseHandler</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="UserEvents"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.UserEvents">[docs]</a><span class="k">class</span> <span class="nc">UserEvents</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="UserEvents.get"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.UserEvents.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be</span>
+<span class="sd">        called Event. At the moment the default ranking is just by the number of people interested in the event. We</span>
+<span class="sd">        will soon change this to a more sophisticated metric, but probably not for the MVP.</span>
+
+<span class="sd">        :param int fbid: The user&#39;s Facebook ID</span>
+<span class="sd">        :param int page: Which page of results should be returned.</span>
+<span class="sd">        :param int page_size: The number of results to return per-page.</span>
+<span class="sd">        :returns: A list of events by the default ranking as well as standard pagination parameters.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                &quot;data&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;attending_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;interested_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;noreply_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;maybe_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;start_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;end_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;picture_url&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;description&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;ticket_uri&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;place&quot;: &quot;str&quot;</span>
+<span class="sd">                    }, </span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;next&quot;: &quot;/events?page=2&amp;page_size=25&amp;fbid=123&quot;,</span>
+<span class="sd">                &quot;prev&quot;: &quot;/events?page=0&amp;page_size=25&amp;fbid=123&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fbid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;fbid&#39;</span><span class="p">))</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="s1">&#39;25&#39;</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting events for just this user...&quot;</span><span class="p">);</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">select_events_for_user</span><span class="p">(</span><span class="n">fbid</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span><span class="o">*</span><span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got </span><span class="si">{}</span><span class="s2"> events&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
+
+        <span class="nb">next</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_next_and_prev</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">limit</span><span class="p">],</span>
+            <span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="nb">next</span><span class="p">,</span>
+            <span class="s1">&#39;prev&#39;</span><span class="p">:</span> <span class="n">prev</span>
+        <span class="p">})</span></div>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="UserEvents.post"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.UserEvents.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s_user_id</span><span class="p">,</span> <span class="n">s_event_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint is intended to save an event to the user&#39;s personal feed (the table user_event).</span>
+<span class="sd">            If the event already exists, only the updated_at field is modified.</span>
+
+<span class="sd">        :param string s_user_id: The user&#39;s Facebook ID</span>
+<span class="sd">        :param string s_event_id: The ID of the event.</span>
+<span class="sd">        :returns: A pair of user_id, event_id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s_user_id</span><span class="p">)</span>
+        <span class="n">event_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s_event_id</span><span class="p">)</span>
+
+        <span class="n">user_event</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">select_user_event</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">UserEvent</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">fb_user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">update_user_event</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+            <span class="s1">&#39;event_id&#39;</span><span class="p">:</span> <span class="n">event_id</span><span class="p">,</span>
+        <span class="p">})</span></div>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="UserEvents.put"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.UserEvents.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint is intended to update fields on a list of events. The updates are specified</span>
+<span class="sd">            in the PUT body as below. id is required for each update.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+<span class="sd">          </span>
+<span class="sd">              [{&quot;id&quot;: 0, &quot;name&quot;: &quot;my new event name&quot;}, {&quot;id&quot;: 1, &quot;hidden&quot;: 1}, {&quot;id&quot;: 2, &quot;name&quot;: &quot;my other new event name&quot;}]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">updates</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="n">Event</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="BigEvents"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.BigEvents">[docs]</a><span class="k">class</span> <span class="nc">BigEvents</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="BigEvents.get"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.BigEvents.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be</span>
+<span class="sd">        called Event. These events will be ordered by the number of people interested in them, and do not correspond</span>
+<span class="sd">        to the user&#39;s liked pages.</span>
+
+<span class="sd">        :param int page: Which page of results should be returned.</span>
+<span class="sd">        :param int page_size: The number of results to return per-page.</span>
+<span class="sd">        :returns: A list of events ranked by the sheer volume of people interested in them</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                &quot;data&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;attending_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;interested_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;noreply_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;maybe_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;start_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;end_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;picture_url&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;description&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;ticket_uri&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;place&quot;: &quot;str&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;next&quot;: &quot;/events?page=2&amp;page_size=25&quot;,</span>
+<span class="sd">                &quot;prev&quot;: &quot;/events?page=0&amp;page_size=25&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="s1">&#39;25&#39;</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting events by interested count...&quot;</span><span class="p">);</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">select_events_by_interested_count</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="n">page</span><span class="o">*</span><span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got </span><span class="si">{}</span><span class="s2"> events&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
+
+        <span class="nb">next</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_next_and_prev</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">limit</span><span class="p">],</span>
+            <span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="nb">next</span><span class="p">,</span>
+            <span class="s1">&#39;prev&#39;</span><span class="p">:</span> <span class="n">prev</span>
+        <span class="p">})</span></div></div>
+
+
+<div class="viewcode-block" id="CoolEvents"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.CoolEvents">[docs]</a><span class="k">class</span> <span class="nc">CoolEvents</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+<div class="viewcode-block" id="CoolEvents.get"><a class="viewcode-back" href="../../handlers__event.html#handlers.event.CoolEvents.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint is intended to provide a ranking of events as a list view. The corresponding detail view should be</span>
+<span class="sd">        called Event. These events are ranked by the ratio of those &quot;going to&quot; the event to those that have not yet</span>
+<span class="sd">        replied to their invitation.</span>
+
+<span class="sd">        :param int page: Which page of results should be returned.</span>
+<span class="sd">        :param int page_size: The number of results to return per-page.</span>
+<span class="sd">        :returns: A list of events by the default ranking as well as standard pagination parameters.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                &quot;data&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;attending_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;interested_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;noreply_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;maybe_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;start_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;end_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;picture_url&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;description&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;ticket_uri&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;place&quot;: &quot;str&quot;</span>
+<span class="sd">                    }, </span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;next&quot;: &quot;/events?page=2&amp;page_size=25&quot;,</span>
+<span class="sd">                &quot;prev&quot;: &quot;/events?page=0&amp;page_size=25&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="s1">&#39;25&#39;</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting events by attendance ratio...&quot;</span><span class="p">);</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">select_events_by_attendance_ratio</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="n">page</span><span class="o">*</span><span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got </span><span class="si">{}</span><span class="s2"> events&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
+
+        <span class="nb">next</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_next_and_prev</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">limit</span><span class="p">],</span>
+            <span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="nb">next</span><span class="p">,</span>
+            <span class="s1">&#39;prev&#39;</span><span class="p">:</span> <span class="n">prev</span>
+        <span class="p">})</span></div></div>
+
+<span class="k">class</span> <span class="nc">FriendEvents</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fbid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint requires</span>
+<span class="sd">            1. A user&#39;s friends have been stored (through the friend_scraper process) and </span>
+<span class="sd">            2. Those friends have had their pages/events pulled (through the event_scraper process)</span>
+
+<span class="sd">        After that happens we count the number of friends that will potentially have an event </span>
+<span class="sd">            presented to them in their FB NewsFeed. We order by that. This endpoint is pretty </span>
+<span class="sd">            heavy as it takes three left joins. We may need to reassess the performance of it later.</span>
+
+<span class="sd">        :param int fbid: The user&#39;s Facebook ID</span>
+<span class="sd">        :param int page: Which page of results should be returned.</span>
+<span class="sd">        :param int page_size: The number of results to return per-page.</span>
+<span class="sd">        :returns: A list of events by the default ranking as well as standard pagination parameters.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                &quot;data&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;attending_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;interested_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;noreply_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;maybe_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;start_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;end_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;picture_url&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;description&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;ticket_uri&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;place&quot;: &quot;str&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;next&quot;: &quot;/events?page=2&amp;page_size=25&amp;fbid=123&quot;,</span>
+<span class="sd">                &quot;prev&quot;: &quot;/events?page=0&amp;page_size=25&amp;fbid=123&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fbid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fbid</span><span class="p">)</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="s1">&#39;25&#39;</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting events for just this user&#39;s friends...&quot;</span><span class="p">);</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">select_friends_events_for_user</span><span class="p">(</span><span class="n">fbid</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span><span class="o">*</span><span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got </span><span class="si">{}</span><span class="s2"> events&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
+
+        <span class="nb">next</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_next_and_prev</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">limit</span><span class="p">],</span>
+            <span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="nb">next</span><span class="p">,</span>
+            <span class="s1">&#39;prev&#39;</span><span class="p">:</span> <span class="n">prev</span>
+        <span class="p">})</span>
+
+<span class="k">class</span> <span class="nc">UserInterestedEvents</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    
+    <span class="nd">@tornado</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">coroutine</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fbid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This endpoint requires the user to have marked some of their events as &quot;interested&quot;</span>
+<span class="sd">            using PUT and setting the &quot;interested&quot; field to 1. It returns all the events the</span>
+<span class="sd">            user has marked as interested.</span>
+
+<span class="sd">        :param int fbid: The user&#39;s Facebook ID</span>
+<span class="sd">        :param int page: Which page of results should be returned.</span>
+<span class="sd">        :param int page_size: The number of results to return per-page.</span>
+<span class="sd">        :returns: A list of events by the default ranking as well as standard pagination parameters.</span>
+
+<span class="sd">          .. code-block:: JSON</span>
+
+<span class="sd">              {</span>
+<span class="sd">                &quot;data&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_id&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;page_name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;name&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;attending_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;interested_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;noreply_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;maybe_count&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;start_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;end_time&quot;: &quot;int&quot;,</span>
+<span class="sd">                        &quot;picture_url&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;description&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;ticket_uri&quot;: &quot;str&quot;,</span>
+<span class="sd">                        &quot;place&quot;: &quot;str&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;next&quot;: &quot;/user/123/events?page=2&amp;page_size=25&quot;,</span>
+<span class="sd">                &quot;prev&quot;: &quot;/user/123/events?page=0&amp;page_size=25&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fbid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fbid</span><span class="p">)</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_argument</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="s1">&#39;25&#39;</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting events that this user is interested in...&quot;</span><span class="p">);</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">select_user_interested_events</span><span class="p">(</span><span class="n">fbid</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span><span class="o">*</span><span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got </span><span class="si">{}</span><span class="s2"> events&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
+
+        <span class="nb">next</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_next_and_prev</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">({</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">limit</span><span class="p">],</span>
+            <span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="nb">next</span><span class="p">,</span>
+            <span class="s1">&#39;prev&#39;</span><span class="p">:</span> <span class="n">prev</span>
+        <span class="p">})</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Andrew Kelleher, Abdullah Khan, Andrei Gheorghe.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

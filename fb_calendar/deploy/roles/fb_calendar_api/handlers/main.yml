@@ -1,0 +1,5 @@
+---
+- name: restart webapp
+  daemontools_svc:
+    name: webapp
+    state: restarted

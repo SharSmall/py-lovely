@@ -1,0 +1,51 @@
+---
+- name: "Create fb_calendar group"
+  group: name={{ app_user }} state=present
+
+- name: "Create fb_calendar user"
+  user: name={{ app_user }} groups=fb_calendar state=present
+
+- name: "Create local directory"
+  file: group={{ app_user }} owner={{ app_user }} state=directory path="{{ local }}" recurse=true
+
+- name: "Create venv directory"
+  file: group={{ app_user }} owner={{ app_user }} state=directory path="{{ venv }}" recurse=true
+
+- name: "Create app directory"
+  file: group={{ app_user }} owner={{ app_user }} state=directory path="{{ app_root }}" recurse=true
+
+- name: "Create application service directory"
+  file: group={{ app_user }} owner={{ app_user }} state=directory path="{{ app_service }}" recurse=true
+
+- name: "Ensure apt is up-to-date"
+  apt: update_cache=yes
+
+- name: "Install virtualenv"
+  apt: name=python-virtualenv state=present
+
+- name: "Install vim"
+  apt: name=vim state=present
+
+- name: "Install gcc"
+  apt: name=gcc state=present
+
+- name: "Install git"
+  apt: name=git state=present
+
+- name: "Install python development headers"
+  apt: name=python-dev state=present
+
+- name: "Install libffi development headers"
+  apt: name=libffi-dev state=present
+
+- name: "Install md5deep"
+  apt: name=md5deep state=present
+
+- name: "Install tree"
+  apt: name=tree state=present
+
+- name: "Clone the repository"
+  git: 
+    repo: git://github.com/akellehe/fb_calendar.git
+    dest: /src/fb_calendar
+    update: no

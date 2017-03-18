@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sphinx-build -b html /src/fb_calendar/docs/source /src/fb_calendar/docs 

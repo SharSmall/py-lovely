@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby
+#
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "ubuntu/xenial64"
+    
+    config.vm.synced_folder '/src/fb_calendar', '/src/fb_calendar'
+
+    config.vm.network "forwarded_port", guest: 8888, host: 8888 
+
+    config.vm.provider 'virtualbox' do |vbox|
+        vbox.memory = 2048
+        vbox.cpus = 2
+    end
+
+    config.ssh.insert_key = true 
+    config.ssh.forward_agent = true
+
+    config.vm.provision "ansible" do |ansible|
+        ansible.playbook = "deploy/fb_calendar.yml"
+        ansible.verbose = true
+        ansible.extra_vars = { "env" => "dev" }
+    end
+
+end

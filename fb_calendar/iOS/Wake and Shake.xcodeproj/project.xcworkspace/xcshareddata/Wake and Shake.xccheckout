@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>1A365025-03D9-4F36-999F-B8FB410866FA</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Wake and Shake</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>84B09D06DA677BE64ED326D0890567DA803A3A69</key>
+		<string>https://github.com/akellehe/fb_calendar.git</string>
+		<key>D25D11C1667950EF284AD39023855778393B0428</key>
+		<string>https://github.com/akellehe/fb_calendar.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>iOS/Wake and Shake.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>84B09D06DA677BE64ED326D0890567DA803A3A69</key>
+		<string>../../..</string>
+		<key>D25D11C1667950EF284AD39023855778393B0428</key>
+		<string>../../../../ios-app</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/akellehe/fb_calendar.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>84B09D06DA677BE64ED326D0890567DA803A3A69</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>84B09D06DA677BE64ED326D0890567DA803A3A69</string>
+			<key>IDESourceControlWCCName</key>
+			<string>fb_calendar</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>D25D11C1667950EF284AD39023855778393B0428</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ios-app</string>
+		</dict>
+	</array>
+</dict>
+</plist>
